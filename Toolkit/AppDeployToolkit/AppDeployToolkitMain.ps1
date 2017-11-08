@@ -10352,21 +10352,21 @@ If (-not $installTitle) {
 
 ## Sanitize the application details, as they can cause issues in the script
 [char[]]$invalidFileNameChars = [IO.Path]::GetInvalidFileNameChars()
-[string]$appVendor = $appVendor -replace "[$invalidFileNameChars]",'' -replace ' ',''
-[string]$appName = $appName -replace "[$invalidFileNameChars]",'' -replace ' ',''
-[string]$appVersion = $appVersion -replace "[$invalidFileNameChars]",'' -replace ' ',''
-[string]$appArch = $appArch -replace "[$invalidFileNameChars]",'' -replace ' ',''
-[string]$appLang = $appLang -replace "[$invalidFileNameChars]",'' -replace ' ',''
-[string]$appRevision = $appRevision -replace "[$invalidFileNameChars]",'' -replace ' ',''
+[string]$ValidAppVendor = $appVendor -replace "[$invalidFileNameChars]",'' -replace ' ',''
+[string]$ValidAppName = $appName -replace "[$invalidFileNameChars]",'' -replace ' ',''
+[string]$ValidAppVersion = $appVersion -replace "[$invalidFileNameChars]",'' -replace ' ',''
+[string]$ValidAppArch = $appArch -replace "[$invalidFileNameChars]",'' -replace ' ',''
+[string]$ValidAppLang = $appLang -replace "[$invalidFileNameChars]",'' -replace ' ',''
+[string]$ValidAppRevision = $appRevision -replace "[$invalidFileNameChars]",'' -replace ' ',''
 
 ## Build the Installation Name
 If ($ReferredInstallName) { [string]$installName = $ReferredInstallName }
 If (-not $installName) {
-	If ($appArch) {
-		[string]$installName = $appVendor + '_' + $appName + '_' + $appVersion + '_' + $appArch + '_' + $appLang + '_' + $appRevision
+	If ($ValidAppArch) {
+		[string]$installName = $ValidAppVendor + '_' + $ValidAppName + '_' + $ValidAppVersion + '_' + $ValidAppArch + '_' + $ValidAppLang + '_' + $ValidAppRevision
 	}
 	Else {
-		[string]$installName = $appVendor + '_' + $appName + '_' + $appVersion + '_' + $appLang + '_' + $appRevision
+		[string]$installName = $ValidAppVendor + '_' + $ValidAppName + '_' + $ValidAppVersion + '_' + $ValidAppLang + '_' + $ValidAppRevision
 	}
 }
 [string]$installName = $installName.Trim('_') -replace '[_]+','_'
