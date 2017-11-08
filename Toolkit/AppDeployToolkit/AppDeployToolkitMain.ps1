@@ -6635,10 +6635,15 @@ Function Show-InstallationRestartPrompt {
 		
 		[scriptblock]$buttonRestartLater_Click = {
 			## Minimize the form
-			$formRestart.WindowState = 'Minimized'
+			#$formRestart.WindowState = 'Minimized'
+			Write-Log "[Restart Later] button pressed"
 			## Reset the persistence timer
-			$timerPersist.Stop()
-			$timerPersist.Start()
+			#$timerPersist.Stop()
+			#$timerPersist.Start()
+			$formRestart.Close()
+			Start-Sleep -Milliseconds 500
+			$formRestart.Dispose()
+			Start-Sleep -Milliseconds 500
 		}
 		
 		## Restart the computer
@@ -6804,7 +6809,7 @@ Function Show-InstallationRestartPrompt {
 					"-$($_.Key) `"$($_.Value)`""
 				}
 			}) -join ' '
-			Start-Process -FilePath "$PSHOME\powershell.exe" -ArgumentList "-ExecutionPolicy Bypass -NoProfile -NoLogo -WindowStyle Hidden -File `"$scriptPath`" -ReferredInstallTitle `"$installTitle`" -ReferredInstallName `"$installName`" -ReferredLogName `"$logName`" -ShowInstallationRestartPrompt $installRestartPromptParameters -AsyncToolkitLaunch" -WindowStyle 'Hidden' -ErrorAction 'SilentlyContinue'
+			Start-Process -FilePath "$PSHOME\powershell.exe" -ArgumentList "-ExecutionPolicy Bypass -NoProfile -NoLogo -WindowStyle Hidden -File `"$scriptPath`" -ReferredInstallTitle `"$installTitle`" -ReferredInstallName `"$installName`" -ReferredLogName `"$logName`" -ShowInstallationRestartPrompt $installRestartPromptParameters -AsyncToolkitLaunch -DisableLogging" -WindowStyle 'Hidden' -ErrorAction 'SilentlyContinue'
 		}
 		Else {
 			If ($NoCountdown) {
@@ -6820,7 +6825,11 @@ Function Show-InstallationRestartPrompt {
 			
 			#  Activate the Window
 			[Diagnostics.Process]$powershellProcess = Get-Process | Where-Object { $_.MainWindowTitle -match $installTitle }
-			[Microsoft.VisualBasic.Interaction]::AppActivate($powershellProcess.ID)
+			Try{
+				[Microsoft.VisualBasic.Interaction]::AppActivate($powershellProcess.ID)
+			} Catch {
+				Write-Log "$($_.Exception.Message) $($_.ScriptStackTrace) $($_.Exception.InnerException)"
+			}
 		}
 	}
 	End {
@@ -10286,7 +10295,7 @@ If (-not ([Management.Automation.PSTypeName]'PSADT.UiAutomation').Type) {
 If (-not $appName) {
 	#  Find the first MSI file in the Files folder and use that as our install
 	[string]$defaultMsiFile = Get-ChildItem -LiteralPath $dirFiles -ErrorAction 'SilentlyContinue' | Where-Object { (-not $_.PsIsContainer) -and ([IO.Path]::GetExtension($_.Name) -eq '.msi') } | Select-Object -ExpandProperty 'FullName' -First 1
-	If ($defaultMsiFile) {
+	If ($defaultMsiFile -and -not $ReferredInstallName) {
 		Try {
 			[boolean]$useDefaultMsi = $true
 			Write-Log -Message "Discovered Zero-Config MSI installation file [$defaultMsiFile]." -Source $appDeployToolkitName
@@ -10484,6 +10493,7 @@ If ($showInstallationPrompt) {
 	$appDeployMainScriptAsyncParameters.Remove('ReferredInstallName')
 	$appDeployMainScriptAsyncParameters.Remove('ReferredInstallTitle')
 	$appDeployMainScriptAsyncParameters.Remove('ReferredLogName')
+	$appDeployMainScriptAsyncParameters.Remove('DisableLogging')
 	Show-InstallationPrompt @appDeployMainScriptAsyncParameters
 	Exit 0
 }
@@ -10496,6 +10506,7 @@ If ($showInstallationRestartPrompt) {
 	$appDeployMainScriptAsyncParameters.Remove('ReferredInstallName')
 	$appDeployMainScriptAsyncParameters.Remove('ReferredInstallTitle')
 	$appDeployMainScriptAsyncParameters.Remove('ReferredLogName')
+	$appDeployMainScriptAsyncParameters.Remove('DisableLogging')
 	Show-InstallationRestartPrompt @appDeployMainScriptAsyncParameters
 	Exit 0
 }
